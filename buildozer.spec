@@ -76,4 +76,11 @@ android.clean_build = 1
 # ===============================
 source.exclude_dirs = tests,bin,__pycache__
 source.exclude_patterns = *.pyc,*.pyo,*.swp
+[app]
+version = 1.0
+
+android.sdk_path = /home/runner/android-sdk
+android.ndk_path = /home/runner/android-sdk/ndk/25.2.9519653
+
+
 
