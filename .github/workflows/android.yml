@@ -2,8 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -19,43 +18,33 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install system dependencies
+      - name: Install system packages
         run: |
           sudo apt update
-          sudo apt install -y \
-            openjdk-17-jdk \
-            zip unzip git \
-            libffi-dev libssl-dev \
-            build-essential \
-            wget curl
+          sudo apt install -y openjdk-17-jdk zip unzip git wget curl \
+          libffi-dev libssl-dev build-essential
 
       - name: Install Android SDK
         run: |
-          mkdir -p /home/runner/android-sdk
-          echo "ANDROID_HOME=/home/runner/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=/home/runner/android-sdk" >> $GITHUB_ENV
+          mkdir -p $HOME/android-sdk
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
 
-          cd /home/runner
           wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
           unzip commandlinetools-linux-11076708_latest.zip
 
-          mkdir -p android-sdk/cmdline-tools/latest
-          mv cmdline-tools/* android-sdk/cmdline-tools/latest/
+          mkdir -p $HOME/android-sdk/cmdline-tools/latest
+          mv cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
 
-          export PATH=/home/runner/android-sdk/cmdline-tools/latest/bin:$PATH
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
           yes | sdkmanager --licenses
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-33" \
-            "build-tools;30.0.3" \
-            "ndk;25.2.9519653"
-
-          echo "/home/runner/android-sdk/build-tools/30.0.3" >> $GITHUB_PATH
+          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653"
 
       - name: Install Buildozer
         run: |
-          python -m pip install --upgrade pip
+          pip install --upgrade pip
           pip install buildozer cython
 
       - name: Build APK
