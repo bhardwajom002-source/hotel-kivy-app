@@ -1,62 +1,29 @@
-name: Build Android APK
+- name: Install Android SDK (FINAL FIX)
+  run: |
+    mkdir -p /home/runner/android-sdk
+    echo "ANDROID_HOME=/home/runner/android-sdk" >> $GITHUB_ENV
+    echo "ANDROID_SDK_ROOT=/home/runner/android-sdk" >> $GITHUB_ENV
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+    cd /home/runner
+    wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+    unzip commandlinetools-linux-11076708_latest.zip
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+    mkdir -p android-sdk/cmdline-tools/latest
+    mv cmdline-tools/* android-sdk/cmdline-tools/latest/
 
-    steps:
-      - uses: actions/checkout@v4
+    export PATH=/home/runner/android-sdk/cmdline-tools/latest/bin:$PATH
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
+    yes | sdkmanager --licenses
 
-      - name: Install system deps
-        run: |
-          sudo apt update
-          sudo apt install -y openjdk-17-jdk zip unzip git wget curl \
-          libffi-dev libssl-dev build-essential
+    sdkmanager \
+      "platform-tools" \
+      "platforms;android-33" \
+      "build-tools;30.0.3" \
+      "ndk;25.2.9519653"
 
-      - name: Install Android SDK (sdkmanager FIX)
-        run: |
-          mkdir -p /home/runner/android-sdk/cmdline-tools
-          cd /home/runner
+    # 🔥🔥 FINAL BUILD OZER FIX 🔥🔥
+    mkdir -p /home/runner/android-sdk/tools/bin
+    ln -s /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+          /home/runner/android-sdk/tools/bin/sdkmanager
 
-          wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip commandlinetools-linux-*.zip
-
-          mv cmdline-tools android-sdk/cmdline-tools/latest
-
-          echo "ANDROID_HOME=/home/runner/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=/home/runner/android-sdk" >> $GITHUB_ENV
-          echo "/home/runner/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-
-          yes | /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-
-          /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-            "platform-tools" \
-            "platforms;android-33" \
-            "build-tools;30.0.3" \
-            "ndk;25.2.9519653"
-
-          echo "/home/runner/android-sdk/build-tools/30.0.3" >> $GITHUB_PATH
-
-      - name: Install Buildozer
-        run: |
-          pip install --upgrade pip
-          pip install buildozer cython
-
-      - name: Build APK
-        run: |
-          buildozer android debug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: kivy-apk
-          path: bin/*.apk
+    echo "/home/runner/android-sdk/build-tools/30.0.3" >> $GITHUB_PATH
