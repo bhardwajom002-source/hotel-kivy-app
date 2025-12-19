@@ -1,18 +1,13 @@
 [app]
 title = HotelApp
 package.name = hotelapp
-package.domain = org.hotel
+package.domain = org.bhardwaj
+
+version = 1.0
 
 source.dir = .
-source.include_exts = py
+source.main = main.py
 
 requirements = python3,kivy
-
 orientation = portrait
-fullscreen = 1
-
 android.permissions = INTERNET
-
-[buildozer]
-log_level = 2
-warn_on_root = 1
