@@ -1,4 +1,4 @@
-name: Build Android APK (Kivy)
+name: Build Android APK (Kivy + Buildozer)
 
 on:
   push:
@@ -10,35 +10,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      - name: Install system packages
+      - name: Install system dependencies
         run: |
           sudo apt update
           sudo apt install -y \
-            openjdk-17-jdk zip unzip git \
+            openjdk-17-jdk \
+            zip unzip git \
             libffi-dev libssl-dev \
-            build-essential wget curl
+            build-essential \
+            wget curl
 
-      - name: Install Android SDK + AIDL
+      - name: Install Android SDK (AIDL FIX)
         run: |
-          mkdir -p $HOME/android-sdk
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+          mkdir -p /home/runner/android-sdk
+          echo "ANDROID_HOME=/home/runner/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=/home/runner/android-sdk" >> $GITHUB_ENV
 
-          cd $HOME
+          cd /home/runner
           wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip commandlinetools-linux-*.zip
+          unzip commandlinetools-linux-11076708_latest.zip
 
           mkdir -p android-sdk/cmdline-tools/latest
           mv cmdline-tools/* android-sdk/cmdline-tools/latest/
 
-          export PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$PATH
+          export PATH=/home/runner/android-sdk/cmdline-tools/latest/bin:$PATH
 
           yes | sdkmanager --licenses
           sdkmanager \
@@ -47,14 +50,18 @@ jobs:
             "build-tools;30.0.3" \
             "ndk;25.2.9519653"
 
-          echo "$HOME/android-sdk/build-tools/30.0.3" >> $GITHUB_PATH
+          # 🔴 THIS LINE FIXES AIDL ERROR
+          echo "/home/runner/android-sdk/build-tools/30.0.3" >> $GITHUB_PATH
 
       - name: Install Buildozer
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install buildozer cython
 
-      - name: Build APK
+      - name: Build APK with Buildozer
+        env:
+          ANDROID_HOME: /home/runner/android-sdk
+          ANDROID_SDK_ROOT: /home/runner/android-sdk
         run: |
           buildozer android debug
 
